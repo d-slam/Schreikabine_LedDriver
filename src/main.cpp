@@ -10,16 +10,12 @@ CRGB leds[NUM_LED];
 
 const int pinInputSignal = 34;
 
-// --------------------
-// RMS Berechnung
-// --------------------
 float getRMS()
 {
 	const int samples = 1000;
-
 	float offset = 0;
 
-	// DC Offset bestimmen
+	// DC Offset 
 	for (int i = 0; i < samples; i++) { offset += analogRead(pinInputSignal); }
 
 	offset /= samples;

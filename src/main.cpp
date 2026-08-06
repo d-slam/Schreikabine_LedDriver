@@ -22,13 +22,9 @@ float getRMS()
 	float offset = 0;
 
 	// DC Offset bestimmen
-	for (int i = 0; i < samples; i++)
-	{
-		offset += analogRead(micPin);
-	}
+	for (int i = 0; i < samples; i++) { offset += analogRead(micPin); }
 
 	offset /= samples;
-
 
 	// RMS berechnen
 	float sumSquares = 0;
@@ -38,13 +34,12 @@ float getRMS()
 		float value = analogRead(micPin) - offset;
 		sumSquares += value * value;
 	}
-
 	return sqrt(sumSquares / samples);
 }
 
 
 // Kalibrierwert mit deinem dB-Meter bestimmen
-float calibration = 43.42;
+float calibration = 43.42; //dB=20⋅log10​(RMS)+K => K=dB−20⋅log10​(RMS)	: db(leveldBMeter), RMS(rms)
 
 
 // Glättung
@@ -69,30 +64,22 @@ void loop()
 {
 	float rms = getRMS();
 
-
 	// RMS -> dB SPL
 	float dbspl = 20.0 * log10(rms) + calibration;
 
-
 	// Glätten
 	dbSmooth = dbSmooth * 0.9 + dbspl * 0.1;
-
 
 	// Wertebereich für LED Balken
 	float dbMin = 40;
 	float dbMax = 100;
 
-
 	int ledCount = map(dbSmooth, dbMin, dbMax, 0, NUM_LED);
 
 	ledCount = constrain(ledCount, 0, NUM_LED);
 
-
-
 	// Alle LEDs aus
 	fill_solid(leds, NUM_LED, CRGB::Black);
-
-
 
 	// LEDs einschalten
 	for (int i = 0; i < ledCount; i++)
@@ -100,35 +87,19 @@ void loop()
 		float percent = (float)i / NUM_LED;
 
 
-		if (percent < 0.5)
-		{
-			// grün
-			leds[i] = CRGB::Green;
-		}
-		else if (percent < 0.8)
-		{
-			// gelb
-			leds[i] = CRGB::Yellow;
-		}
-		else
-		{
-			// rot
-			leds[i] = CRGB::Red;
-		}
+		if (percent < 0.5) { leds[i] = CRGB::Green; }
+		else if (percent < 0.8) { leds[i] = CRGB::Yellow; }
+		else { leds[i] = CRGB::Red; }		//eventuell low level constrain
+
+		FastLED.show();
+
+		// Debug
+		Serial.print("RMS: ");
+		Serial.print(rms);
+
+		Serial.print("  dB SPL: ");
+		Serial.println(dbSmooth);
+
+		delay(30);
 	}
-
-
-	FastLED.show();
-
-
-
-	// Debug
-	Serial.print("RMS: ");
-	Serial.print(rms);
-
-	Serial.print("  dB SPL: ");
-	Serial.println(dbSmooth);
-
-
-	delay(30);
 }

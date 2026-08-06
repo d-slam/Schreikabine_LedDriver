@@ -1,16 +1,14 @@
 #include <Arduino.h>
 #include <FastLED.h>
-#include <math.h>
+// #include <math.h>
 
 #define DBG(x) Serial.println(x)
 
 #define NUM_LED 20
 #define DATA_PIN 4
-
 CRGB leds[NUM_LED];
 
-const int micPin = 34;
-
+const int pinInputSignal = 34;
 
 // --------------------
 // RMS Berechnung
@@ -22,7 +20,7 @@ float getRMS()
 	float offset = 0;
 
 	// DC Offset bestimmen
-	for (int i = 0; i < samples; i++) { offset += analogRead(micPin); }
+	for (int i = 0; i < samples; i++) { offset += analogRead(pinInputSignal); }
 
 	offset /= samples;
 
@@ -31,25 +29,21 @@ float getRMS()
 
 	for (int i = 0; i < samples; i++)
 	{
-		float value = analogRead(micPin) - offset;
+		float value = analogRead(pinInputSignal) - offset;
 		sumSquares += value * value;
 	}
 	return sqrt(sumSquares / samples);
 }
 
-
 // Kalibrierwert mit deinem dB-Meter bestimmen
 float calibration = 43.42; //dB=20⋅log10​(RMS)+K => K=dB−20⋅log10​(RMS)	: db(leveldBMeter), RMS(rms)
-
 
 // Glättung
 float dbSmooth = 0;
 
-
 void setup()
 {
 	Serial.begin(9600);
-
 	DBG("Serial online!");
 
 	FastLED.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LED);
@@ -57,8 +51,6 @@ void setup()
 	FastLED.clear();
 	FastLED.show();
 }
-
-
 
 void loop()
 {
@@ -85,7 +77,6 @@ void loop()
 	for (int i = 0; i < ledCount; i++)
 	{
 		float percent = (float)i / NUM_LED;
-
 
 		if (percent < 0.5) { leds[i] = CRGB::Green; }
 		else if (percent < 0.8) { leds[i] = CRGB::Yellow; }

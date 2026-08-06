@@ -1,4 +1,13 @@
 #include <Arduino.h>
+#include <FastLED.h>
+#include <math.h>
+
+#define DBG(x) Serial.println(x)
+
+#define NUM_LED 20
+#define DATA_PIN 4
+
+CRGB leds[NUM_LED];
 
 const int micPin = 34;		// adc pin
 
@@ -24,9 +33,12 @@ float getRMS()
 
 float calibration = 43.42;	// aus der formel
 
-void setup() 
+void setup()
 {
-	Serial.begin(115200);
+	Serial.begin(9600);
+	DBG("Serial online!");
+
+	FastLED.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LED);
 }
 
 void loop()
@@ -43,3 +55,4 @@ void loop()
 
 	// delay(500);
 }
+

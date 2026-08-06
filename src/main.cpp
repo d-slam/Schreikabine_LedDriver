@@ -9,50 +9,126 @@
 
 CRGB leds[NUM_LED];
 
-const int micPin = 34;		// adc pin
+const int micPin = 34;
 
+
+// --------------------
+// RMS Berechnung
+// --------------------
 float getRMS()
 {
 	const int samples = 1000;
 
-	// brauchmor net...
-	// long sum = 0;
-	// // Mittelwert bestimmen (DC Offset)
-	// for (int i = 0; i < samples; i++) { sum += analogRead(micPin); }
-	// float offset = sum / (float)samples;
+	float offset = 0;
+
+	// DC Offset bestimmen
+	for (int i = 0; i < samples; i++)
+	{
+		offset += analogRead(micPin);
+	}
+
+	offset /= samples;
+
 
 	// RMS berechnen
 	float sumSquares = 0;
 
-	for (int i = 0; i < samples; i++) {
-		float value = analogRead(micPin); //- offset
+	for (int i = 0; i < samples; i++)
+	{
+		float value = analogRead(micPin) - offset;
 		sumSquares += value * value;
 	}
+
 	return sqrt(sumSquares / samples);
 }
 
-float calibration = 43.42;	// aus der formel
+
+// Kalibrierwert mit deinem dB-Meter bestimmen
+float calibration = 43.42;
+
+
+// Glättung
+float dbSmooth = 0;
+
 
 void setup()
 {
 	Serial.begin(9600);
+
 	DBG("Serial online!");
 
 	FastLED.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LED);
+
+	FastLED.clear();
+	FastLED.show();
 }
+
+
 
 void loop()
 {
 	float rms = getRMS();
 
+
+	// RMS -> dB SPL
 	float dbspl = 20.0 * log10(rms) + calibration;
 
-	// Serial.print("RMS: ");
-	// Serial.print(rms);
 
-	// Serial.print(" dB SPL: ");
-	// Serial.println(dbspl);
+	// Glätten
+	dbSmooth = dbSmooth * 0.9 + dbspl * 0.1;
 
-	// delay(500);
+
+	// Wertebereich für LED Balken
+	float dbMin = 40;
+	float dbMax = 100;
+
+
+	int ledCount = map(dbSmooth, dbMin, dbMax, 0, NUM_LED);
+
+	ledCount = constrain(ledCount, 0, NUM_LED);
+
+
+
+	// Alle LEDs aus
+	fill_solid(leds, NUM_LED, CRGB::Black);
+
+
+
+	// LEDs einschalten
+	for (int i = 0; i < ledCount; i++)
+	{
+		float percent = (float)i / NUM_LED;
+
+
+		if (percent < 0.5)
+		{
+			// grün
+			leds[i] = CRGB::Green;
+		}
+		else if (percent < 0.8)
+		{
+			// gelb
+			leds[i] = CRGB::Yellow;
+		}
+		else
+		{
+			// rot
+			leds[i] = CRGB::Red;
+		}
+	}
+
+
+	FastLED.show();
+
+
+
+	// Debug
+	Serial.print("RMS: ");
+	Serial.print(rms);
+
+	Serial.print("  dB SPL: ");
+	Serial.println(dbSmooth);
+
+
+	delay(30);
 }
-

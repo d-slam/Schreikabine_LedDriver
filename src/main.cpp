@@ -39,9 +39,6 @@ float getRMS()
 // Kalibrierwert mit dB-Meter bestimmen
 float calibration = 33.42; //dB=20⋅log10​(RMS)+K => K=dB−20⋅log10​(RMS)	: db(leveldBMeter), RMS(rms)
 
-// Glättung
-float dbSmooth = 0;
-
 void setup()
 {
 	Serial.begin(9600);
@@ -53,6 +50,8 @@ void setup()
 	FastLED.clear();
 	FastLED.show();
 }
+
+// Glättung
 
 void loop()
 {
@@ -66,22 +65,18 @@ void loop()
 
 	if (!isfinite(dbspl))	{ return; }			// iwos mochen wenn die checks failn...
 
-	// Glätten
-	// dbSmooth = dbSmooth * 0.7f + dbspl * 0.3f;
+	static float dbSmooth = 0;
 	if (dbspl > dbSmooth) 	{ dbSmooth += (dbspl - dbSmooth) * 0.4f; }	// attack
 	else					{ dbSmooth += (dbspl - dbSmooth) * 0.1f; }	// release
 
-	// Wertebereich für LED Balken
 	float dbMin = 40.0f;
 	float dbMax = 120.0f;
 
-	int ledCount = map(dbSmooth, dbMin, dbMax, 0, NUM_LED);		// achtung: map castet als long, helper für float wäre supper
+	int ledCount = map(dbSmooth, dbMin, dbMax, 0, NUM_LED);		// achtung: map castet als long, helper für float währe supper
 	ledCount = constrain(ledCount, 0, NUM_LED);
 
-	// Alle LEDs aus
 	fill_solid(leds, NUM_LED, CRGB::Black);
 
-	// LEDs einschalten
 	for (int i = 0; i < ledCount; i++)
 	{
 		float percent = (float)i / NUM_LED;
@@ -91,12 +86,11 @@ void loop()
 		else						leds[i] = CRGB::Red;
 	}
 
-	// EINMAL pro Loop
 	FastLED.show();
 
-	Serial.print("RMS: ");
-	Serial.print(rms);
+	DBG("RMS: ");
+	DBG(rms);
 
-	Serial.print("  dB SPL: ");
-	Serial.println(dbSmooth);
+	DBG("  dB SPL: ");
+	DBG(dbSmooth);
 }

@@ -12,23 +12,28 @@ const int pinInputSignal = A7;
 
 float getRMS()
 {
-	const int samples = 128;
-	float offset = 0;
+    const int samples = 256;
 
-	// DC Offset 
-	for (int i = 0; i < samples; i++) { offset += analogRead(pinInputSignal); }
+    float sum = 0.0f;
+    float values[samples];
 
-	offset /= samples;
+    for (int i = 0; i < samples; i++)
+    {
+        values[i] = analogRead(pinInputSignal);
+        sum += values[i];
+    }
 
-	// RMS berechnen
-	float sumSquares = 0;
+    float offset = sum / samples;
 
-	for (int i = 0; i < samples; i++)
-	{
-		float value = analogRead(pinInputSignal) - offset;
-		sumSquares += value * value;
-	}
-	return sqrt(sumSquares / samples);
+    float sumSquares = 0.0f;
+
+    for (int i = 0; i < samples; i++)
+    {
+        float value = values[i] - offset;
+        sumSquares += value * value;
+    }
+
+    return sqrtf(sumSquares / samples);
 }
 
 // Kalibrierwert mit dB-Meter bestimmen
